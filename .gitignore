@@ -11,10 +11,21 @@ kgviz/_viewer/build/
 .env
 .DS_Store
 
-# Local Cursor/Cortex transcripts (regenerate maps locally; do not commit)
-example/data/sessions/*.jsonl
+# Local IDE / editor
+.claude/
+*.bak
 
-# Prebuilt session/cortex maps (embed real conversation text; regenerate locally)
-example/demo_map_sessions_tsne.html
-example/demo_map_sessions_tsne.meta.json
-example/demo_map_cortex_tsne.html
+# Playwright & debug artifacts (regenerate locally; do not commit)
+**/playwright_*.png
+**/pw_*.png
+**/*_playwright.png
+scripts/debug_3d_blank.*
+kgviz_playwright_*.mjs
+
+# Private conversation data (Cursor JSONL, Snowflake Cortex history)
+example/data/sessions/*.jsonl
+**/*.history.jsonl
+
+# Maps built from real sessions (embed private text and may contain secrets)
+example/demo_map_sessions*
+example/demo_map_cortex*
