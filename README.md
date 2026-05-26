@@ -9,7 +9,7 @@
 ```
 kgviz/       Python wrapper — data prep, HTML export, framework adapters
 viewer/      Browser component — React/Three.js 3D renderer (see viewer/README.md)
-example/     Streamlit demo
+example/     Runnable demos (Streamlit, Gradio, Dash, marimo, Jupyter, HTML)
 AGENTS.md    Architecture guide for contributors and coding agents
 ```
 
@@ -155,6 +155,21 @@ npx kgviz serve sessions.html
 
 See [packages/kgviz/README.md](packages/kgviz/README.md) for all flags.
 
+## Framework examples
+
+Runnable apps under `example/` (from repo root after `pip install -e ".[all]"`):
+
+| Framework | Example | Run |
+|-----------|---------|-----|
+| **Streamlit** | `example/app.py` | `streamlit run example/app.py` |
+| **Gradio** | `example/app_gradio.py` | `python example/app_gradio.py` |
+| **Dash** | `example/app_dash.py` | `python example/app_dash.py` → http://127.0.0.1:8050 |
+| **marimo** | `example/marimo_demo.py` | `marimo edit example/marimo_demo.py` |
+| **Jupyter** | `example/notebook_demo.ipynb` | open in Jupyter / VS Code |
+| **HTML** | `example/demo.html` | `python3 serve_demo.py` → http://127.0.0.1:8765/demo.html |
+
+Shared sample graph data: `example/demo_graph.py`.
+
 ## Framework usage
 
 ### Jupyter / IPython
@@ -193,6 +208,16 @@ fig = Graph3D(nodes=nodes, edges=edges)
 layout = dash_iframe(fig, height=600)
 ```
 
+### marimo
+
+```python
+from kgviz import Graph3D
+from kgviz.integrations import marimo_chart
+
+fig = Graph3D(nodes=nodes, edges=edges)
+marimo_chart(fig)  # in a cell: displays mo.Html
+```
+
 ## Standalone HTML demo
 
 ```bash
@@ -211,9 +236,12 @@ python3 -m pytest tests/ -q
 python3 -m playwright install chromium   # once, for browser tests
 python3 -m pytest tests/test_browser_playwright.py -q
 streamlit run example/app.py
+python example/app_gradio.py
+python example/app_dash.py
+marimo edit example/marimo_demo.py
 ```
 
-**Notebook demo:** `example/notebook_demo.ipynb`
+See [Framework examples](#framework-examples) for all runnable demos.
 
 ### Publish to PyPI
 
