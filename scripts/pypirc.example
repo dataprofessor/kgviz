@@ -1,4 +1,4 @@
-# Copy to ~/.pypirc only if you prefer a file over env vars.
+# scripts/pypirc.example — copy to ~/.pypirc if you prefer a file over env vars.
 # Use an API token — NOT your PyPI account password.
 # https://pypi.org/manage/account/token/
 

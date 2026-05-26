@@ -50,7 +50,7 @@ def main() -> None:
         path.write_text(fig.to_html(), encoding="utf-8")
         print(f"Wrote {path}")
 
-    print("Open: python3 serve_demo.py → http://127.0.0.1:8765/demo_map_tsne.html")
+    print("Open: python3 example/serve_demo.py → http://127.0.0.1:8765/demo_map_tsne.html")
 
 
 if __name__ == "__main__":

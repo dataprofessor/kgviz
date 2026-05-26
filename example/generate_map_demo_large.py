@@ -51,7 +51,7 @@ def main() -> None:
         path.write_text(fig.to_html(), encoding="utf-8")
         print(f"  Wrote {path} ({path.stat().st_size // 1024} KB)")
 
-    print("Serve: python3 serve_demo.py → http://127.0.0.1:8765/demo_map_50k.html")
+    print("Serve: python3 example/serve_demo.py → http://127.0.0.1:8765/demo_map_50k.html")
 
 
 if __name__ == "__main__":

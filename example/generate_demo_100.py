@@ -103,7 +103,7 @@ def main() -> None:
     out.write_text(fig.to_html(), encoding="utf-8")
     print(f"Wrote {out}")
     print(f"  nodes={len(nodes)} edges={len(edges)}")
-    print("  Open: python3 serve_demo.py --port 8765")
+    print("  Open: python3 example/serve_demo.py --port 8765")
     print("  Then:  http://127.0.0.1:8765/demo_100.html")
 
 

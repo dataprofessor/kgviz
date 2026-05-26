@@ -195,7 +195,7 @@ def main() -> None:
 
     print(f"Wrote {OUTPUT_HTML}")
     print(f"  {meta['points']} points · {method} · color by {args.color_by}")
-    print("Open: python3 serve_demo.py → http://127.0.0.1:8765/demo_map_sessions_tsne.html")
+    print("Open: python3 example/serve_demo.py → http://127.0.0.1:8765/demo_map_sessions_tsne.html")
 
 
 if __name__ == "__main__":

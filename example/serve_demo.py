@@ -9,7 +9,7 @@ import socketserver
 import sys
 from pathlib import Path
 
-EXAMPLE_DIR = Path(__file__).resolve().parent / "example"
+EXAMPLE_DIR = Path(__file__).resolve().parent
 
 
 def main() -> int:
@@ -57,7 +57,7 @@ def main() -> int:
     except OSError as e:
         if e.errno == 48 or "Address already in use" in str(e):
             print(f"Port {args.port} is in use. Stop the other server or run:", file=sys.stderr)
-            print(f"  python serve_demo.py --port {args.port + 1}", file=sys.stderr)
+            print(f"  python3 example/serve_demo.py --port {args.port + 1}", file=sys.stderr)
         else:
             print(e, file=sys.stderr)
         return 1

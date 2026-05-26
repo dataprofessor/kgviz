@@ -1,18 +1,19 @@
 # kgviz
 
-3D knowledge graph visualization for Python — works like Plotly/Altair across Jupyter notebooks, Streamlit, Gradio, Dash, marimo, and plain HTML export.
+kgviz is a 3D knowledge graph visualization for Python. It works like Plotly/Altair across Jupyter notebooks, Streamlit, Gradio, Dash, marimo, and plain HTML export.
 
-**Repository:** [github.com/dataprofessor/kgviz](https://github.com/dataprofessor/kgviz)
-
-![kgviz web demo — t-SNE embedding map](kgviz-web.png)
+![kgviz web demo — t-SNE embedding map](docs/kgviz-web.png)
 
 ## Project layout
 
 ```
 kgviz/       Python wrapper — data prep, HTML export, framework adapters
 viewer/      Browser component — React/Three.js 3D renderer (see viewer/README.md)
-example/     Runnable demos (Streamlit, Gradio, Dash, marimo, Jupyter, HTML)
-AGENTS.md    Architecture guide for contributors and coding agents
+example/     Runnable demos, HTML exports, serve_demo.py
+docs/        README assets
+scripts/     publish_pypi.sh, pypirc.example
+packages/    npm CLI (kgviz)
+tests/       pytest suite
 ```
 
 ## Install
@@ -135,7 +136,7 @@ python3 example/generate_map_demo_sessions.py --source claude --per-session
 # All sources on one map
 python3 example/generate_map_demo_sessions.py --source all --color-by source
 
-python3 serve_demo.py   # → http://127.0.0.1:8765/demo_map_sessions_tsne.html
+python3 example/serve_demo.py   # → http://127.0.0.1:8765/demo_map_sessions_tsne.html
 ```
 
 Options: `--per-session`, `--color-by topic|source|workspace|project`, `--method pca` for faster layout. Session HTML files are **gitignored** (private chat text) — generate locally only.
@@ -168,7 +169,7 @@ Runnable apps under `example/` (from repo root after `pip install -e ".[all]"`):
 | **Dash** | `example/app_dash.py` | `python example/app_dash.py` → http://127.0.0.1:8050 |
 | **marimo** | `example/marimo_demo.py` | `marimo edit example/marimo_demo.py` |
 | **Jupyter** | `example/notebook_demo.ipynb` | open in Jupyter / VS Code |
-| **HTML** | `example/demo.html` | `python3 serve_demo.py` → http://127.0.0.1:8765/demo.html |
+| **HTML** | `example/demo.html` | `python3 example/serve_demo.py` → http://127.0.0.1:8765/demo.html |
 
 Shared sample graph data: `example/demo_graph.py`.
 
@@ -224,10 +225,10 @@ marimo_chart(fig)  # in a cell: displays mo.Html
 
 ```bash
 cd /path/to/kgviz
-python3 serve_demo.py
+python3 example/serve_demo.py
 ```
 
-Open **http://127.0.0.1:8765/demo.html** (must use `serve_demo.py` or `cd example` before `python3 -m http.server`).
+Open **http://127.0.0.1:8765/demo.html** (or `cd example && python3 -m http.server 8765`).
 
 ## Development
 
