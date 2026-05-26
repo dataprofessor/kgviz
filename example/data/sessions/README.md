@@ -1,6 +1,6 @@
-# Session JSONL (all sessions)
+# Session JSONL (local only)
 
-28 transcript files copied from Cursor `agent-transcripts`.
+`*.jsonl` and prebuilt `demo_map_sessions_tsne.html` / `demo_map_cortex_tsne.html` are **gitignored** (they can contain private chat text and secrets). Keep them on your machine only.
 
 Regenerate the map:
 
