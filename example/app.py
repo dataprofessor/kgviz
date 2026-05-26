@@ -931,7 +931,7 @@ with tab7:
         format_func=lambda m: {"pca": "PCA", "tsne": "t-SNE", "umap": "UMAP", "som": "SOM"}[m],
     )
     n_docs = st.slider("Number of documents", 80, 8000, 250, step=20)
-    st.caption("Maps with ≥1500 points use WebGL instancing automatically.")
+    st.caption("Large maps use canvas rendering with automatic performance tiers.")
     knn_k = st.slider("KNN edges (0 = scatter only)", 0, 5, 0)
 
     rng = random.Random(42)

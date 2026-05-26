@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate large embedding map demos (WebGL instanced points)."""
+"""Generate large embedding map demos (canvas scatter, 10k–50k points)."""
 
 from __future__ import annotations
 
@@ -45,7 +45,6 @@ def main() -> None:
             knn_k=0,
             node_color_by="topic",
             legend_node_by="topic",
-            instanced_map_threshold=1500,
             height=700,
         )
         path = out_dir / f"demo_map_{name}.html"

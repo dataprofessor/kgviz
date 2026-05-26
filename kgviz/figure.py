@@ -140,7 +140,7 @@ class Graph3D:
         enable_multi_select: bool = True,
         map_mode: bool = False,
         layout_method: str | None = None,
-        instanced_map_threshold: int = 1500,
+        instanced_map_threshold: int = 1500,  # reserved; viewer uses canvas map overlay
         link_directional_arrow: bool = False,
         arrow_size: str = "medium",
         bidirectional: bool = False,

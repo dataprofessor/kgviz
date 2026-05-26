@@ -8,7 +8,7 @@ export const PERF_THRESHOLDS = {
   labelsHoverOnly: 2000,
   freezeSimulation: 60,
   particlesMax: 500,
-  /** Map mode: switch to WebGL Points instancing (Cosmograph-style) */
+  /** Reserved threshold for disabled instanced WebGL path */
   instancedMap: 1500,
 } as const
 

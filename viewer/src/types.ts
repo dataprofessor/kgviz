@@ -45,7 +45,7 @@ export interface ComponentArgs {
   /** Cosmograph-style scatter map: 2D coords, minimal edges, auto fit */
   map_mode?: boolean
   layout_method?: string | null
-  /** At or above this count, map_mode uses WebGL point instancing (default 1500) */
+  /** Reserved; instanced WebGL path is disabled — large maps use the canvas overlay */
   instanced_map_threshold?: number
   use_coordinates: boolean
   height: number | null

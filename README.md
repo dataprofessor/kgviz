@@ -89,7 +89,7 @@ fig.show()
 
 Lower-level API: `from kgviz.layouts import compute_layout, build_map_graph, apply_layout_to_nodes`.
 
-**Large maps (10k–100k+ points):** at ≥1500 nodes, `map_mode` automatically uses **WebGL point instancing** (Cosmograph-style LOD) instead of canvas circles. Tune with `instanced_map_threshold=1500`.
+**Large maps (10k–100k+ points):** `map_mode` renders points on a **2D canvas overlay** (with an optional 3D orbit view). Performance tiers automatically reduce label and glow work on big datasets.
 
 ```bash
 python3 example/generate_map_demo_large.py   # demo_map_10k.html, demo_map_50k.html
