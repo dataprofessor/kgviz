@@ -29,3 +29,4 @@ example/data/sessions/*.jsonl
 # Maps built from real sessions (embed private text and may contain secrets)
 example/demo_map_sessions*
 example/demo_map_cortex*
+example/notebook_export.html

@@ -1,0 +1,7 @@
+# Copy to ~/.pypirc only if you prefer a file over env vars.
+# Use an API token — NOT your PyPI account password.
+# https://pypi.org/manage/account/token/
+
+[pypi]
+username = __token__
+password = pypi-REPLACE_WITH_YOUR_TOKEN

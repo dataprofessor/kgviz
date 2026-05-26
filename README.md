@@ -206,8 +206,27 @@ Open **http://127.0.0.1:8765/demo.html** (must use `serve_demo.py` or `cd exampl
 
 ```bash
 cd viewer && npm install && npm run build
-pip install -e ".[dev]"
+pip install -e ".[dev,all]"
+python3 -m pytest tests/ -q
+python3 -m playwright install chromium   # once, for browser tests
+python3 -m pytest tests/test_browser_playwright.py -q
 streamlit run example/app.py
 ```
 
-See [AGENTS.md](AGENTS.md) for the full architecture guide.
+**Notebook demo:** `example/notebook_demo.ipynb`
+
+### Publish to PyPI
+
+PyPI no longer accepts account username/password. Use an [API token](https://pypi.org/manage/account/token/) (`pypi-...`):
+
+```bash
+export TWINE_USERNAME=__token__
+export TWINE_PASSWORD='pypi-...'   # not your login password
+bash scripts/publish_pypi.sh
+```
+
+Or upload an existing build:
+
+```bash
+python3 -m twine upload dist/*
+```
