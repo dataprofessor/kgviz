@@ -140,7 +140,7 @@ npx kgviz sessions --source all --color-by source
 npx kgviz serve sessions.html
 ```
 
-See [packages/kgviz/README.md](packages/kgviz/README.md). The old [`kgviz-session-map`](https://github.com/dataprofessor/kgviz/tree/main/packages/kgviz-session-map) package is **deprecated** — use `npx kgviz sessions` instead.
+See [packages/kgviz/README.md](packages/kgviz/README.md).
 
 ## Framework usage
 

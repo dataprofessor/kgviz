@@ -3,8 +3,7 @@
   "private": true,
   "description": "kgviz monorepo — publish packages/kgviz to npm",
   "workspaces": [
-    "packages/kgviz",
-    "packages/kgviz-session-map"
+    "packages/kgviz"
   ],
   "scripts": {
     "build:viewer": "cd viewer && npm run build",
