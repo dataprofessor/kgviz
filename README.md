@@ -11,7 +11,7 @@ kgviz/       Python wrapper — data prep, HTML export, framework adapters
 viewer/      Browser component — React/Three.js 3D renderer (see viewer/README.md)
 example/     Runnable demos, HTML exports, serve_demo.py
 docs/        README assets
-scripts/     publish_pypi.sh, pypirc.example
+scripts/     pypirc.example
 packages/    npm CLI (kgviz)
 tests/       pytest suite
 ```
@@ -253,11 +253,9 @@ PyPI no longer accepts account username/password. Use an [API token](https://pyp
 ```bash
 export TWINE_USERNAME=__token__
 export TWINE_PASSWORD='pypi-...'   # not your login password
-bash scripts/publish_pypi.sh
-```
 
-Or upload an existing build:
-
-```bash
+cd viewer && npm run build && cd ..
+rm -rf dist/ && python3 -m build
+python3 -m twine check dist/*
 python3 -m twine upload dist/*
 ```

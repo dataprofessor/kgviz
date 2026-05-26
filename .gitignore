@@ -15,6 +15,9 @@ kgviz/_viewer/build/
 .claude/
 *.bak
 
+# Local publish helpers (keep on your machine only)
+scripts/publish_pypi.sh
+
 # Playwright & debug artifacts (regenerate locally; do not commit)
 **/playwright_*.png
 **/pw_*.png
