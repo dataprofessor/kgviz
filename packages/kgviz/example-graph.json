@@ -1,0 +1,14 @@
+{
+  "nodes": [
+    { "id": "A", "label": "Alpha", "type": "start", "size": 10 },
+    { "id": "B", "label": "Beta", "type": "mid", "size": 8 },
+    { "id": "C", "label": "Gamma", "type": "end", "size": 6 }
+  ],
+  "edges": [
+    { "source": "A", "target": "B", "label": "flows" },
+    { "source": "B", "target": "C" }
+  ],
+  "show_legend": true,
+  "default_view": "3d",
+  "show_labels": true
+}

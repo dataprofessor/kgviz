@@ -1,0 +1,13 @@
+{
+  "name": "kgviz-session-map",
+  "version": "0.1.1",
+  "description": "Deprecated: use the kgviz package — npx kgviz sessions",
+  "type": "module",
+  "bin": {
+    "kgviz-session-map": "./bin/kgviz-session-map.mjs",
+    "kgviz-sessions": "./bin/kgviz-session-map.mjs"
+  },
+  "files": ["bin"],
+  "license": "MIT",
+  "engines": { "node": ">=18" }
+}

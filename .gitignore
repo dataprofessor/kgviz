@@ -1,0 +1,20 @@
+__pycache__/
+*.egg-info/
+dist/
+build/
+*.pyc
+.venv/
+.pytest_cache/
+node_modules/
+viewer/build/
+kgviz/_viewer/build/
+.env
+.DS_Store
+
+# Local Cursor/Cortex transcripts (regenerate maps locally; do not commit)
+example/data/sessions/*.jsonl
+
+# Prebuilt session/cortex maps (embed real conversation text; regenerate locally)
+example/demo_map_sessions_tsne.html
+example/demo_map_sessions_tsne.meta.json
+example/demo_map_cortex_tsne.html

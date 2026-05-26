@@ -1,0 +1,28 @@
+{
+  "name": "kgviz-viewer",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 3001",
+    "build": "tsc && vite build && rm -rf ../kgviz/_viewer/build && mkdir -p ../kgviz/_viewer && cp -R build ../kgviz/_viewer/build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-force-graph-2d": "^1.29.1",
+    "react-force-graph-3d": "^1.29.1",
+    "streamlit-component-lib": "^2.0.0",
+    "three": ">=0.160.0",
+    "three-spritetext": "^1.9.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.20",
+    "@types/react-dom": "^18.3.6",
+    "@types/three": "^0.160.0",
+    "@vitejs/plugin-react-swc": "^3.9.0",
+    "typescript": "^5.8.3",
+    "vite": "^6.4.1"
+  }
+}
