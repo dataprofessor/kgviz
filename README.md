@@ -15,11 +15,22 @@ AGENTS.md    Architecture guide for contributors and coding agents
 
 ## Install
 
+**Python** (pip):
+
 ```bash
 pip install kgviz
+pip install "kgviz[all]"    # Streamlit, Jupyter, maps, etc.
+```
 
-# With framework extras
-pip install "kgviz[all]"
+**Node CLI** ([npm](https://www.npmjs.com/package/kgviz)) — no Python required for HTML export and session maps:
+
+```bash
+# One-off (no install) — good for trying it
+npx kgviz help
+
+# Or install globally and run `kgviz` directly
+npm install -g kgviz
+kgviz help
 ```
 
 ## Quick start
@@ -127,20 +138,22 @@ python3 serve_demo.py   # → http://127.0.0.1:8765/demo_map_sessions_tsne.html
 
 Options: `--per-session`, `--color-by topic|source|workspace|project`, `--method pca` for faster layout. Session HTML files are **gitignored** (private chat text) — generate locally only.
 
-### npx CLI (no Python)
+### Node CLI (npm / npx)
 
-Publishable npm package: **`packages/kgviz`** → install as `kgviz` on npm.
+Package: **[kgviz on npm](https://www.npmjs.com/package/kgviz)** (`npx` = run without installing; `npm install -g` = install the `kgviz` command).
 
 ```bash
-npx kgviz help
+# Either form works:
 npx kgviz build graph.json -o graph.html
+kgviz build graph.json -o graph.html          # after: npm install -g kgviz
+
 npx kgviz sessions --per-session -o sessions.html
 npx kgviz sessions --source claude --color-by project
 npx kgviz sessions --source all --color-by source
 npx kgviz serve sessions.html
 ```
 
-See [packages/kgviz/README.md](packages/kgviz/README.md).
+See [packages/kgviz/README.md](packages/kgviz/README.md) for all flags.
 
 ## Framework usage
 

@@ -1,9 +1,12 @@
 # kgviz (npm)
 
-**npx** CLI for the [kgviz](https://github.com/dataprofessor/kgviz) 3D graph viewer — no Python required for HTML export and session maps.
+CLI for the [kgviz](https://github.com/dataprofessor/kgviz) 3D graph viewer — no Python required for HTML export and session maps.
+
+**Install:** [npmjs.com/package/kgviz](https://www.npmjs.com/package/kgviz)
 
 ```bash
-npx kgviz help
+npx kgviz help              # run once, no install
+npm install -g kgviz        # then: kgviz help
 ```
 
 ## Commands
