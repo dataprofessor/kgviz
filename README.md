@@ -4,6 +4,8 @@
 
 **Repository:** [github.com/dataprofessor/kgviz](https://github.com/dataprofessor/kgviz)
 
+![kgviz web demo — t-SNE embedding map](kgviz-web.png)
+
 ## Project layout
 
 ```
