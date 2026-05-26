@@ -10,13 +10,6 @@ import * as THREE from "three"
 import SpriteText from "three-spritetext"
 import { ComponentArgs, NodeData } from "./types"
 import { buildPerfProfile, PERF_THRESHOLDS } from "./performance"
-import {
-  fitMapCamera,
-  INSTANCED_POINTS_LAYER_NAME,
-  InstancedPointsLayer,
-  lodPointSize,
-  resolveForceGraphRoot,
-} from "./instancedPoints"
 import { GraphLegend } from "./GraphLegend"
 import {
   buildLegendFromField,
@@ -32,6 +25,7 @@ import {
   defaultMapCamera,
   depthRange,
   depthScale,
+  fitMapCamera,
   projectMapNodes,
   projectMapPoint,
   type MapCamera,
@@ -988,10 +982,7 @@ export function KGVizView({ args, theme, streamlitMode = false }: KGVizViewProps
     performance_mode = "auto",
     map_mode = false,
     layout_method = null,
-    instanced_map_threshold = PERF_THRESHOLDS.instancedMap,
   } = args as ComponentArgs
-
-  const instancedThreshold = Math.max(100, instanced_map_threshold ?? PERF_THRESHOLDS.instancedMap)
 
   const arrowLength = map_mode || !link_directional_arrow ? 0
     : arrow_size === "small" ? 2
@@ -1009,10 +1000,6 @@ export function KGVizView({ args, theme, streamlitMode = false }: KGVizViewProps
   const containerRef = useRef<HTMLDivElement>(null)
   const graph3dRef = useRef<any>(null)
   const graph2dRef = useRef<any>(null)
-  const instancedLayerRef = useRef<InstancedPointsLayer | null>(null)
-  const raycasterRef = useRef(new THREE.Raycaster())
-  const pointerNdcRef = useRef(new THREE.Vector2())
-  if (!instancedLayerRef.current) instancedLayerRef.current = new InstancedPointsLayer()
   const [containerWidth, setContainerWidth] = useState<number>(800)
   const [labelsOn, setLabelsOn] = useState(show_labels)
   const [hovered, setHovered] = useState(false)
@@ -1075,15 +1062,12 @@ export function KGVizView({ args, theme, streamlitMode = false }: KGVizViewProps
       show_labels,
       particle_flow,
       map_mode,
-      instancedThreshold,
     ),
-    [performance_mode, graph_data.nodes.length, graphLinks.length, show_labels, particle_flow, map_mode, instancedThreshold],
+    [performance_mode, graph_data.nodes.length, graphLinks.length, show_labels, particle_flow, map_mode],
   )
 
-  const useInstancedMap = perf.useInstancedMap
   const mapCanvas3d = map_mode && viewMode === "3d"
-  const showInstancedLayer = false
-  const effectiveViewMode: ViewMode = map_mode ? viewMode : (useInstancedMap ? "3d" : viewMode)
+  const effectiveViewMode: ViewMode = viewMode
   const mounted3d = !map_mode && viewMode === "3d"
   const mounted2d = map_mode || viewMode === "2d"
   const [mapCamera, setMapCamera] = useState<MapCamera>(() => defaultMapCamera())
@@ -1104,11 +1088,7 @@ export function KGVizView({ args, theme, streamlitMode = false }: KGVizViewProps
 
   const mapDepthBoundsRef = useRef({ min: 0, max: 1 })
 
-  useEffect(() => {
-    if (useInstancedMap && !map_mode && viewMode !== "3d") setViewMode("3d")
-  }, [useInstancedMap, map_mode, viewMode])
-
-  const effectiveLabelsOn = labelsOn && !showInstancedLayer && (
+  const effectiveLabelsOn = labelsOn && (
     map_mode
       ? true
       : effectiveViewMode === "2d"
@@ -1117,7 +1097,7 @@ export function KGVizView({ args, theme, streamlitMode = false }: KGVizViewProps
         : perf.useCustom3dNodes && graph_data.nodes.length <= PERF_THRESHOLDS.labelsAlways
   )
 
-  const labelsOnHover3d = labelsOn && !showInstancedLayer && !map_mode
+  const labelsOnHover3d = labelsOn && !map_mode
     && effectiveViewMode === "3d"
     && perf.useCustom3dNodes
     && graph_data.nodes.length > PERF_THRESHOLDS.labelsAlways
@@ -1136,7 +1116,7 @@ export function KGVizView({ args, theme, streamlitMode = false }: KGVizViewProps
       if (node.x == null || node.y == null) continue
       const z = node.z ?? 0
       layoutXYZRef.current.set(node.id, { x: node.x, y: node.y, z })
-      if (baseInitialView === "2d" && !useInstancedMap && !map_mode) {
+      if (baseInitialView === "2d" && !map_mode) {
         layoutXYZRef.current.set(node.id, { x: node.x, y: -node.y, z })
       }
     }
@@ -1145,7 +1125,7 @@ export function KGVizView({ args, theme, streamlitMode = false }: KGVizViewProps
     } else if (map_mode && use_coordinates && graph_data.nodes.some(n => n.x != null && n.y != null)) {
       setLayoutLocked(true)
     }
-  }, [graph_data, use_coordinates, baseInitialView, useInstancedMap, map_mode])
+  }, [graph_data, use_coordinates, baseInitialView, map_mode])
 
   useEffect(() => {
     if (!mounted3d && !mounted2d) return
@@ -1219,7 +1199,10 @@ export function KGVizView({ args, theme, streamlitMode = false }: KGVizViewProps
   useEffect(() => {
     const g = graph3dRef.current; if (!g || !perf.useCustom3dNodes) return
     try {
-      const renderer = (g as any).renderer() as THREE.WebGLRenderer
+      const renderer = (g as any).renderer() as {
+        toneMapping: number
+        toneMappingExposure: number
+      }
       const scene = (g as any).scene() as THREE.Scene
       const RIM_NAME = "__kg3d_rim"
       if (hqMode && perf.allowHq) {
@@ -1352,8 +1335,8 @@ export function KGVizView({ args, theme, streamlitMode = false }: KGVizViewProps
     [nodePassesFilters],
   )
   const linkVisibilityFn = useCallback(
-    (link: GraphLink) => !mapCanvas3d && !showInstancedLayer && linkPassesFilters(link),
-    [linkPassesFilters, showInstancedLayer, mapCanvas3d],
+    (link: GraphLink) => !mapCanvas3d && linkPassesFilters(link),
+    [linkPassesFilters, mapCanvas3d],
   )
 
   const mapClusterCentroids = useMemo(() => {
@@ -1692,69 +1675,6 @@ export function KGVizView({ args, theme, streamlitMode = false }: KGVizViewProps
     [highlightedNodes],
   )
 
-  const getInstancedParent = useCallback((): THREE.Object3D | null => {
-    const g = graph3dRef.current
-    const scene = g?.scene?.() as THREE.Scene | null
-    if (!scene) return null
-    return resolveForceGraphRoot(scene)
-  }, [])
-
-  const rebuildInstancedLayer = useCallback(() => {
-    const layer = instancedLayerRef.current
-    const parent = getInstancedParent()
-    if (!layer || !parent || !showInstancedLayer) return
-    const nodes = graph3dData.nodes as NodeData[]
-    layer.attach(parent, nodes, {
-      getColor: (node) => getNodeColor(node, node_color),
-      isVisible: nodePassesFilters,
-      highlightIds: highlightedIdStrings,
-      searchIds: searchMatchIds,
-    })
-    layer.setPointSize(lodPointSize(0, nodes.length))
-  }, [
-    showInstancedLayer,
-    getInstancedParent,
-    graph3dData.nodes,
-    node_color,
-    nodePassesFilters,
-    highlightedIdStrings,
-    searchMatchIds,
-  ])
-
-  useEffect(() => {
-    if (!showInstancedLayer || !mounted3d) return
-    let cancelled = false
-    let retries = 0
-    const attach = () => {
-      if (cancelled) return
-      rebuildInstancedLayer()
-      const g3 = graph3dRef.current
-      if (g3) fitMapCamera(g3, graph3dData.nodes as NodeData[])
-      const count = instancedLayerRef.current?.count ?? 0
-      if (count === 0 && retries < 8 && !cancelled) {
-        retries += 1
-        requestAnimationFrame(attach)
-      }
-    }
-    const id = requestAnimationFrame(attach)
-    return () => {
-      cancelled = true
-      cancelAnimationFrame(id)
-      const parent = getInstancedParent()
-      if (parent) instancedLayerRef.current?.dispose(parent)
-    }
-  }, [showInstancedLayer, mounted3d, rebuildInstancedLayer, getInstancedParent, hiddenNodeTypes, hiddenEdgeTypes, graph3dData.nodes])
-
-  useEffect(() => {
-    if (!showInstancedLayer) return
-    instancedLayerRef.current?.updateColors({
-      getColor: (node) => getNodeColor(node, node_color),
-      isVisible: nodePassesFilters,
-      highlightIds: highlightedIdStrings,
-      searchIds: searchMatchIds,
-    })
-  }, [showInstancedLayer, searchMatchIds, highlightedIdStrings, node_color, nodePassesFilters])
-
   // Search glow effect (3D) + camera / pan (both modes)
   useEffect(() => {
     if (viewMode === "3d" && perf.useCustom3dNodes) {
@@ -1826,13 +1746,13 @@ export function KGVizView({ args, theme, streamlitMode = false }: KGVizViewProps
 
   useEffect(() => {
     if (viewMode === "2d" && !mapCanvas3d) graph2dRef.current?.refresh?.()
-    if (viewMode === "3d" && perf.useCustom3dNodes && !map_mode && !showInstancedLayer) {
+    if (viewMode === "3d" && perf.useCustom3dNodes && !map_mode) {
       for (const node of graph3dData.nodes as NodeData[]) {
         delete (node as { __threeObj?: THREE.Object3D }).__threeObj
       }
       graph3dRef.current?.refresh?.()
     }
-  }, [viewMode, mapCanvas3d, map_mode, showInstancedLayer, hoveredNode, highlightedNodes, searchMatchIds, labelsOn, hqMode, effectiveLabelsOn, graph3dData.nodes, perf.useCustom3dNodes])
+  }, [viewMode, mapCanvas3d, map_mode, hoveredNode, highlightedNodes, searchMatchIds, labelsOn, hqMode, effectiveLabelsOn, graph3dData.nodes, perf.useCustom3dNodes])
 
   // Clear search glows when search is closed (3D only)
   useEffect(() => {
@@ -1868,19 +1788,9 @@ export function KGVizView({ args, theme, streamlitMode = false }: KGVizViewProps
     releasePinnedNodes(graph2dData.nodes)
   }, [graph3dData.nodes, graph2dData.nodes, layoutLocked])
 
-  const onEngineTick3d = useCallback(() => {
-    if (!showInstancedLayer) return
-    const layer = instancedLayerRef.current
-    const parent = getInstancedParent()
-    if (!layer || !parent) return
-    if (!layer.count || !parent.getObjectByName(INSTANCED_POINTS_LAYER_NAME)) {
-      rebuildInstancedLayer()
-    }
-  }, [showInstancedLayer, rebuildInstancedLayer, getInstancedParent])
-
   const onEngineStop3d = useCallback(() => {
     const g3 = graph3dRef.current
-    if (layoutLocked && use_coordinates && !showInstancedLayer && !map_mode) {
+    if (layoutLocked && use_coordinates && !map_mode) {
       restorePinned3dCoordinates(graph3dData.nodes, layoutXYZRef.current)
     }
     if (perf.freezeSimulation) stabilize3dSimulation(g3)
@@ -1897,12 +1807,7 @@ export function KGVizView({ args, theme, streamlitMode = false }: KGVizViewProps
       )
     }
     if (!layoutLocked) onLayoutSettled()
-    if (showInstancedLayer && g3) {
-      rebuildInstancedLayer()
-      ensureLights()
-      fitMapCamera(g3, graph3dData.nodes as NodeData[])
-      tune3dControls(g3)
-    } else if (map_mode && viewMode === "3d" && g3) {
+    if (map_mode && viewMode === "3d" && g3) {
       restoreMapPinnedCoordinates(graph3dData.nodes as NodeData[])
       ensureLights()
       fitMapCamera(g3, graph3dData.nodes as NodeData[])
@@ -1930,7 +1835,7 @@ export function KGVizView({ args, theme, streamlitMode = false }: KGVizViewProps
       pendingLayoutSyncRef.current = false
       stabilize3dSimulation(g3)
     }
-  }, [onLayoutSettled, refresh3dScene, rebuildInstancedLayer, layoutLocked, effectiveViewMode, viewMode, graph2dData, graph3dData, use_coordinates, containerWidth, height, perf.freezeSimulation, showInstancedLayer, map_mode, ensureLights])
+  }, [onLayoutSettled, refresh3dScene, layoutLocked, effectiveViewMode, viewMode, graph2dData, graph3dData, use_coordinates, containerWidth, height, perf.freezeSimulation, map_mode, ensureLights])
 
   const onEngineStop2d = useCallback(() => {
     if (mapCanvas3d) return
@@ -2092,40 +1997,17 @@ export function KGVizView({ args, theme, streamlitMode = false }: KGVizViewProps
     setHoveredNode(node)
   }, [])
 
-  const pickInstancedNode = useCallback((clientX: number, clientY: number): NodeData | null => {
-    const g = graph3dRef.current
-    const layer = instancedLayerRef.current
-    const rect = containerRef.current?.getBoundingClientRect()
-    if (!g || !layer || !rect?.width || !rect.height) return null
-    const camera = g.camera?.() as THREE.Camera | undefined
-    if (!camera) return null
-    pointerNdcRef.current.x = ((clientX - rect.left) / rect.width) * 2 - 1
-    pointerNdcRef.current.y = -((clientY - rect.top) / rect.height) * 2 + 1
-    return layer.pick(
-      raycasterRef.current,
-      pointerNdcRef.current,
-      camera,
-      rect.width,
-      rect.height,
-    )
-  }, [])
-
   const onMouseMove = useCallback((e: React.MouseEvent) => {
     const rect = containerRef.current?.getBoundingClientRect()
     if (rect) setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top })
     if (mapCanvas3d) {
       setHoveredNode(pickMapOverlayNode(e.clientX, e.clientY))
-    } else if (showInstancedLayer) {
-      setHoveredNode(pickInstancedNode(e.clientX, e.clientY))
     }
-  }, [mapCanvas3d, showInstancedLayer, pickInstancedNode, pickMapOverlayNode])
+  }, [mapCanvas3d, pickMapOverlayNode])
 
-  const onContainerClick = useCallback((e: React.MouseEvent) => {
+  const onContainerClick = useCallback((_e: React.MouseEvent) => {
     if (mapCanvas3d) return
-    if (!showInstancedLayer) return
-    const node = pickInstancedNode(e.clientX, e.clientY)
-    if (node) onNodeClick(node)
-  }, [mapCanvas3d, showInstancedLayer, pickInstancedNode, onNodeClick])
+  }, [mapCanvas3d])
 
   const nodeCanvasObject2d = useCallback((node: NodeData, ctx: CanvasRenderingContext2D) => {
     if (mapCanvas3d) return
@@ -2449,10 +2331,10 @@ export function KGVizView({ args, theme, streamlitMode = false }: KGVizViewProps
       a.click()
     }
     try {
-      if (!map_mode && (showInstancedLayer || viewMode === "3d")) {
+      if (!map_mode && viewMode === "3d") {
         const g = graph3dRef.current
         if (!g?.renderer || !g?.scene || !g?.camera) return
-        const renderer = g.renderer() as THREE.WebGLRenderer
+        const renderer = g.renderer() as { render: (s: unknown, c: unknown) => void; domElement: HTMLCanvasElement }
         renderer.render(g.scene(), g.camera())
         downloadDataUrl(renderer.domElement.toDataURL("image/png"))
         return
@@ -2471,7 +2353,7 @@ export function KGVizView({ args, theme, streamlitMode = false }: KGVizViewProps
     } catch (err) {
       console.warn("kgviz: PNG export failed", err)
     }
-  }, [viewMode, showInstancedLayer, resolvedBgColor])
+  }, [viewMode, map_mode, resolvedBgColor])
 
   const toggleSearch = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
@@ -2516,25 +2398,21 @@ export function KGVizView({ args, theme, streamlitMode = false }: KGVizViewProps
       return next
     })
   }, [])
-  const particleCount = perf.allowParticles && particle_flow && !showInstancedLayer ? 3 : 0
-  const graph3dProps = showInstancedLayer
+  const particleCount = perf.allowParticles && particle_flow ? 3 : 0
+  const graph3dProps = perf.useCustom3dNodes
     ? {
+        nodeThreeObject: nodeThreeObject as never,
+        nodeThreeObjectExtend: false as const,
         nodeLabel: "" as const,
       }
-      : perf.useCustom3dNodes
-        ? {
-            nodeThreeObject: nodeThreeObject as never,
-            nodeThreeObjectExtend: false as const,
-            nodeLabel: "" as const,
-          }
-        : {
-            nodeColor: nodeColor3d as never,
-            nodeVal: nodeVal3d as never,
-            nodeLabel: nodeLabel3d as never,
-            nodeResolution: perf.nodeResolution3d,
-            nodeRelSize: 4,
-            nodeOpacity: NODE_OPACITY,
-          }
+    : {
+        nodeColor: nodeColor3d as never,
+        nodeVal: nodeVal3d as never,
+        nodeLabel: nodeLabel3d as never,
+        nodeResolution: perf.nodeResolution3d,
+        nodeRelSize: 4,
+        nodeOpacity: NODE_OPACITY,
+      }
   const graph2dProps = mapCanvas3d
     ? {
         nodeLabel: "" as const,
@@ -2579,7 +2457,7 @@ export function KGVizView({ args, theme, streamlitMode = false }: KGVizViewProps
 
   // Compute search match count
   const searchMatchCount = searchMatchIds.size
-  const warmup3d = layoutLocked || showInstancedLayer ? 0 : (baseInitialView === "3d" ? warmup_ticks : 0)
+  const warmup3d = layoutLocked ? 0 : (baseInitialView === "3d" ? warmup_ticks : 0)
   const warmup2d = layoutLocked ? 0 : (baseInitialView === "2d" ? warmup_ticks : 0)
   const cooldownLocked = layoutLocked ? 0 : (warmup_ticks > 0 ? 0 : undefined)
 
@@ -2633,11 +2511,10 @@ export function KGVizView({ args, theme, streamlitMode = false }: KGVizViewProps
             width={containerWidth}
             height={height}
             {...graph3dProps}
-            onNodeClick={showInstancedLayer ? () => {} : onNodeClick}
+            onNodeClick={onNodeClick}
             onLinkClick={onLinkClick}
             onEngineStop={onEngineStop3d}
-            onEngineTick={onEngineTick3d}
-            onNodeHover={showInstancedLayer ? () => {} : (onNodeHover as never)}
+            onNodeHover={onNodeHover as never}
             backgroundColor={resolvedBgColor}
             showNavInfo={false}
             linkDirectionalArrowLength={arrowLength}
@@ -2651,7 +2528,7 @@ export function KGVizView({ args, theme, streamlitMode = false }: KGVizViewProps
             linkWidth={linkWidthFn as never}
             linkLabel={linkLabelFn as never}
             linkVisibility={linkVisibilityFn as never}
-            nodeVisibility={(showInstancedLayer ? () => false : nodeVisibilityFn) as never}
+            nodeVisibility={nodeVisibilityFn as never}
             linkDirectionalArrowColor={linkColorFn as never}
             linkDirectionalParticles={particleCount}
             linkDirectionalParticleSpeed={particle_speed}

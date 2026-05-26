@@ -1,3 +1,4 @@
+import * as THREE from "three"
 import type { NodeData } from "./types"
 
 export type MapCamera = {
@@ -63,6 +64,49 @@ export function depthScale(depth: number, minD: number, maxD: number): number {
   if (maxD <= minD) return 1
   const t = (depth - minD) / (maxD - minD)
   return 0.55 + 0.45 * t
+}
+
+/** Fit the ForceGraph3D camera to map node bounds (map 3D orbit helper). */
+export function fitMapCamera(
+  g: {
+    cameraPosition?: (...args: unknown[]) => unknown
+    controls?: () => { target?: THREE.Vector3; update?: () => void }
+  },
+  nodes: NodeData[],
+  padding = 1.25,
+) {
+  if (!nodes.length || !g.cameraPosition) return
+  let xMin = Infinity
+  let xMax = -Infinity
+  let yMin = Infinity
+  let yMax = -Infinity
+  let zMin = Infinity
+  let zMax = -Infinity
+  for (const n of nodes) {
+    const x = n.x ?? 0
+    const y = n.y ?? 0
+    const z = n.z ?? 0
+    if (x < xMin) xMin = x
+    if (x > xMax) xMax = x
+    if (y < yMin) yMin = y
+    if (y > yMax) yMax = y
+    if (z < zMin) zMin = z
+    if (z < zMax) zMax = z
+  }
+  const cx = (xMin + xMax) / 2
+  const cy = (yMin + yMax) / 2
+  const cz = (zMin + zMax) / 2
+  const span = Math.max(xMax - xMin, yMax - yMin, zMax - zMin, 1) * padding
+  g.cameraPosition(
+    { x: cx, y: cy, z: cz + span },
+    { x: cx, y: cy, z: cz },
+    0,
+  )
+  const controls = g.controls?.()
+  if (controls?.target) {
+    controls.target.set(cx, cy, cz)
+    controls.update?.()
+  }
 }
 
 export function depthRange(nodes: NodeData[]): { min: number; max: number } {

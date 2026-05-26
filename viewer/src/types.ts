@@ -45,8 +45,6 @@ export interface ComponentArgs {
   /** Cosmograph-style scatter map: 2D coords, minimal edges, auto fit */
   map_mode?: boolean
   layout_method?: string | null
-  /** Reserved; instanced WebGL path is disabled — large maps use the canvas overlay */
-  instanced_map_threshold?: number
   use_coordinates: boolean
   height: number | null
   width: number | null

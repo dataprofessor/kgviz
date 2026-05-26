@@ -89,7 +89,7 @@ fig.show()
 
 Lower-level API: `from kgviz.layouts import compute_layout, build_map_graph, apply_layout_to_nodes`.
 
-**Large maps (10k–100k+ points):** `map_mode` renders points on a **2D canvas overlay** (with an optional 3D orbit view). Performance tiers automatically reduce label and glow work on big datasets.
+**Large maps (10k–100k+ points):** `map_mode` draws points on a **canvas overlay** (2D scatter or 3D orbit). Performance tiers automatically reduce labels and effects on big datasets. Regular knowledge graphs still use the **Three.js** 3D renderer for force-directed layouts.
 
 ```bash
 python3 example/generate_map_demo_large.py   # demo_map_10k.html, demo_map_50k.html

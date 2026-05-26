@@ -2,7 +2,7 @@
 
 Browser-based 3D knowledge graph renderer for **kgviz**.
 
-This folder is the **viewer** — a standalone React + Three.js HTML component. It owns all rendering, interaction, and WebGL logic. The Python package in `../kgviz/` is a thin wrapper that prepares graph data and embeds this viewer.
+This folder is the **viewer** — a standalone React component. It owns rendering and interaction: **canvas** for embedding maps, **Three.js** for 3D force-directed graphs. The Python package in `../kgviz/` is a thin wrapper that prepares graph data and embeds this viewer.
 
 ## What lives here
 
@@ -68,7 +68,7 @@ Key fields:
 ## Dependencies
 
 - **react-force-graph-3d** — force-directed 3D layout
-- **three** — WebGL rendering
+- **three** — 3D graph rendering
 - **streamlit-component-lib** — only used in Streamlit mode
 
 ## Build output

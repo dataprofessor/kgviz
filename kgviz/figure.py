@@ -140,7 +140,6 @@ class Graph3D:
         enable_multi_select: bool = True,
         map_mode: bool = False,
         layout_method: str | None = None,
-        instanced_map_threshold: int = 1500,  # reserved; viewer uses canvas map overlay
         link_directional_arrow: bool = False,
         arrow_size: str = "medium",
         bidirectional: bool = False,
@@ -206,7 +205,6 @@ class Graph3D:
             "enable_multi_select": enable_multi_select,
             "map_mode": map_mode,
             "layout_method": layout_method,
-            "instanced_map_threshold": max(100, int(instanced_map_threshold)),
             "link_directional_arrow": link_directional_arrow,
             "arrow_size": arrow_size,
             "bidirectional": bidirectional,

@@ -8,8 +8,6 @@ export const PERF_THRESHOLDS = {
   labelsHoverOnly: 2000,
   freezeSimulation: 60,
   particlesMax: 500,
-  /** Reserved threshold for disabled instanced WebGL path */
-  instancedMap: 1500,
 } as const
 
 export type PerfProfile = {
@@ -28,16 +26,6 @@ export type PerfProfile = {
   light2dEffects: boolean
   d3VelocityDecay: number
   d3AlphaDecay: number
-  useInstancedMap: boolean
-}
-
-export function shouldUseInstancedMap(
-  mapMode: boolean,
-  nodeCount: number,
-  threshold?: number,
-): boolean {
-  const minNodes = threshold ?? PERF_THRESHOLDS.instancedMap
-  return mapMode && nodeCount >= minNodes
 }
 
 export function resolvePerfTier(
@@ -58,13 +46,10 @@ export function buildPerfProfile(
   edgeCount: number,
   labelsRequested: boolean,
   particlesRequested: boolean,
-  mapMode = false,
-  instancedThreshold: number = PERF_THRESHOLDS.instancedMap,
+  _mapMode = false,
 ): PerfProfile {
   const tier = resolvePerfTier(mode, nodeCount, edgeCount)
-  const useInstancedMap = shouldUseInstancedMap(mapMode, nodeCount, instancedThreshold)
-  const useCustom3dNodes = !useInstancedMap
-    && tier === "quality"
+  const useCustom3dNodes = tier === "quality"
     && nodeCount <= PERF_THRESHOLDS.rich3dNodes
   const useCustom2dCanvas = tier === "quality"
     || (tier === "balanced" && nodeCount <= PERF_THRESHOLDS.rich2dCanvas)
@@ -93,6 +78,5 @@ export function buildPerfProfile(
     light2dEffects: tier === "quality" || (tier === "balanced" && nodeCount <= 800),
     d3VelocityDecay: tier === "performance" ? 0.55 : tier === "balanced" ? 0.4 : 0.3,
     d3AlphaDecay: tier === "performance" ? 0.05 : tier === "balanced" ? 0.022 : 0.01,
-    useInstancedMap,
   }
 }
