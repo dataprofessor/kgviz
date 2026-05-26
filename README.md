@@ -95,14 +95,37 @@ Lower-level API: `from kgviz.layouts import compute_layout, build_map_graph, app
 python3 example/generate_map_demo_large.py   # demo_map_10k.html, demo_map_50k.html
 ```
 
-**Cortex conversations (t-SNE):** cluster Snowflake Cortex Code sessions from `~/.snowflake/cortex/conversations`:
+### AI coding session maps (example use case)
+
+Explore **where your agent conversations cluster** — by topic, project, or tool — as an interactive 2D/3D embedding map. Each point is a message turn or whole session (with `--per-session`).
+
+| Tool | Default data path | What gets read |
+|------|-------------------|----------------|
+| **Snowflake Cortex Code** | `~/.snowflake/cortex/conversations/**/*.history.jsonl` | Cortex agent chats |
+| **Cursor IDE** | `~/.cursor/projects/*/agent-transcripts/**/*.jsonl` | Cursor agent transcripts |
+| **Claude Code (CLI)** | `~/.claude/projects/<project>/*.jsonl` | Claude Code session logs ([local storage](https://kentgigger.com/posts/claude-code-conversation-history)) |
+
+**Python** (full t-SNE / UMAP on large histories):
 
 ```bash
-python3 example/generate_map_demo_sessions.py
-python3 serve_demo.py   # http://127.0.0.1:8765/demo_map_sessions_tsne.html
+pip install "kgviz[maps]"
+
+# Cortex Code (default)
+python3 example/generate_map_demo_sessions.py --per-session
+
+# Cursor IDE transcripts
+python3 example/generate_map_demo_sessions.py --source cursor --per-session --color-by project
+
+# Claude Code CLI
+python3 example/generate_map_demo_sessions.py --source claude --per-session
+
+# All sources on one map
+python3 example/generate_map_demo_sessions.py --source all --color-by source
+
+python3 serve_demo.py   # → http://127.0.0.1:8765/demo_map_sessions_tsne.html
 ```
 
-Options: `--per-session` (one point per session), `--color-by workspace`, `--method pca` for faster layout on large histories.
+Options: `--per-session`, `--color-by topic|source|workspace|project`, `--method pca` for faster layout. Session HTML files are **gitignored** (private chat text) — generate locally only.
 
 ### npx CLI (no Python)
 
@@ -112,10 +135,12 @@ Publishable npm package: **`packages/kgviz`** → install as `kgviz` on npm.
 npx kgviz help
 npx kgviz build graph.json -o graph.html
 npx kgviz sessions --per-session -o sessions.html
+npx kgviz sessions --source claude --color-by project
+npx kgviz sessions --source all --color-by source
 npx kgviz serve sessions.html
 ```
 
-See [packages/kgviz/README.md](packages/kgviz/README.md). (`kgviz-session-map` is a deprecated alias for `kgviz sessions`.)
+See [packages/kgviz/README.md](packages/kgviz/README.md). The old [`kgviz-session-map`](https://github.com/dataprofessor/kgviz/tree/main/packages/kgviz-session-map) package is **deprecated** — use `npx kgviz sessions` instead.
 
 ## Framework usage
 

@@ -34,20 +34,24 @@ npx kgviz build --nodes nodes.json --edges edges.json -o out.html
 
 Nodes with `x`, `y` (and optional `z`) use fixed coordinates (`use_coordinates`).
 
-### `kgviz sessions` — Cortex / Cursor conversation maps
+### `kgviz sessions` — AI coding session maps
+
+Cluster **Cortex Code**, **Cursor IDE**, or **Claude Code** transcripts into one interactive map.
 
 ```bash
 npx kgviz sessions --per-session -o sessions.html
+npx kgviz sessions --source claude --color-by project
 npx kgviz sessions --source all --color-by source
 npx kgviz sessions --source cortex --method pca
 ```
 
 | Flag | Description |
 |------|-------------|
-| `--source` | `cortex` \| `cursor` \| `all` |
+| `--source` | `cortex` \| `cursor` \| `claude` \| `all` |
 | `--per-session` | One node per chat (not per message) |
 | `--cortex-dir` | Default `~/.snowflake/cortex/conversations` |
-| `--cursor-dir` | Default `~/.cursor/projects` |
+| `--cursor-dir` | Default `~/.cursor/projects` (agent-transcripts) |
+| `--claude-dir` | Default `~/.claude/projects` (Claude Code CLI) |
 | `--method` | `tsne` \| `pca` (t-SNE capped at 4k points in Node) |
 
 ### `kgviz serve` — local preview

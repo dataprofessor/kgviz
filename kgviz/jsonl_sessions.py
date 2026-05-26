@@ -28,9 +28,24 @@ def _require_sklearn():
         ) from e
 
 
-def extract_message_text(record: dict[str, Any]) -> str:
-    """Pull plain text from a JSONL message record."""
+def message_role(record: dict[str, Any]) -> str:
+    """User/assistant role from Cursor or Claude Code JSONL records."""
+    role = str(record.get("role") or record.get("type") or "").lower()
+    if role in ("user", "assistant"):
+        return role
     message = record.get("message")
+    if isinstance(message, dict):
+        inner = str(message.get("role", "")).lower()
+        if inner in ("user", "assistant"):
+            return inner
+    return ""
+
+
+def extract_message_text(record: dict[str, Any]) -> str:
+    """Pull plain text from a JSONL message record (Cursor IDE or Claude Code)."""
+    message = record.get("message")
+    if isinstance(message, str):
+        return message.strip()
     if not isinstance(message, dict):
         return ""
     content = message.get("content")
@@ -88,6 +103,9 @@ def infer_project_and_session(path: Path) -> tuple[str, str]:
     if "agent-transcripts" in parts:
         idx = parts.index("agent-transcripts")
         project = parts[idx - 1] if idx > 0 else "unknown"
+    elif "projects" in parts and ".claude" in parts:
+        idx = parts.index("projects")
+        project = parts[idx + 1] if idx + 1 < len(parts) else "unknown"
     elif "sessions" in parts:
         project = "bundled"
     else:
@@ -99,6 +117,26 @@ def infer_project_and_session(path: Path) -> tuple[str, str]:
     else:
         session_id = parent_name
     return project, session_id
+
+
+DEFAULT_CLAUDE_PROJECTS = Path.home() / ".claude" / "projects"
+
+
+def discover_all_claude_transcripts(
+    projects_root: Path | str | None = None,
+) -> list[Path]:
+    """Collect session JSONL files from ``~/.claude/projects/<project>/*.jsonl`` (Claude Code CLI)."""
+    root = Path(projects_root or DEFAULT_CLAUDE_PROJECTS).expanduser()
+    if not root.is_dir():
+        return []
+    files: list[Path] = []
+    for project_dir in sorted(root.iterdir()):
+        if not project_dir.is_dir():
+            continue
+        for path in sorted(project_dir.glob("*.jsonl")):
+            if path.is_file():
+                files.append(path)
+    return files
 
 
 def discover_all_cursor_transcripts(
@@ -171,7 +209,7 @@ def load_conversation_turns(
         session_label = session_title_from_path(path, session_id=session_id)
 
         for line_no, record in iter_jsonl_records(path):
-            role = str(record.get("role", "")).lower()
+            role = message_role(record)
             if role not in roles:
                 continue
             text = extract_message_text(record)
@@ -181,6 +219,7 @@ def load_conversation_turns(
             display = query or text
             topic = infer_topic(display)
             turn_id = f"{project}:{session_id}:{line_no}"
+            source = "claude" if ".claude" in path.parts else "cursor"
             turns.append({
                 "id": turn_id,
                 "label": truncate_label(display),
@@ -188,6 +227,7 @@ def load_conversation_turns(
                 "session": session_label,
                 "session_id": session_id,
                 "project": project,
+                "source": source,
                 "topic": topic,
                 "text": text,
                 "line": line_no,
@@ -209,6 +249,36 @@ def text_feature_matrix(texts: list[str], *, max_features: int = 256) -> Any:
     )
     matrix = vectorizer.fit_transform(texts)
     return matrix.toarray()
+
+
+def load_jsonl_sessions(
+    jsonl_paths: Iterable[Path | str],
+    *,
+    min_chars: int = 24,
+) -> list[dict[str, Any]]:
+    """One node per transcript file (aggregated session text)."""
+    sessions: list[dict[str, Any]] = []
+    for raw_path in jsonl_paths:
+        path = Path(raw_path).expanduser().resolve()
+        turns = load_conversation_turns([path], min_chars=min_chars)
+        if not turns:
+            continue
+        first = turns[0]
+        text = "\n\n".join(t["text"] for t in turns)[:8000]
+        source = first.get("source", "jsonl")
+        sessions.append({
+            "id": f"{source}:{first['project']}:{first['session_id']}",
+            "label": first["session"],
+            "role": "Session",
+            "session": first["session"],
+            "session_id": first["session_id"],
+            "project": first["project"],
+            "source": source,
+            "topic": infer_topic(text),
+            "text": text,
+            "turn_count": len(turns),
+        })
+    return sessions
 
 
 def load_sessions_from_dir(

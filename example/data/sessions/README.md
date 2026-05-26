@@ -11,14 +11,18 @@ These paths are **gitignored**:
 
 Maps can embed secrets (e.g. webhook URLs in chat). Regenerate locally only.
 
-Regenerate the Cortex/session map:
+Regenerate locally (outputs are gitignored):
 
 ```bash
-python3 example/generate_map_demo_sessions.py --bundled-only
-```
+# Snowflake Cortex Code
+python3 example/generate_map_demo_sessions.py --per-session
 
-Refresh from Cursor (all projects):
+# Cursor IDE
+python3 example/generate_map_demo_sessions.py --source cursor --per-session
 
-```bash
-python3 example/generate_map_demo_sessions.py --export-all
+# Claude Code CLI (~/.claude/projects)
+python3 example/generate_map_demo_sessions.py --source claude --per-session
+
+# All sources
+python3 example/generate_map_demo_sessions.py --source all --color-by source
 ```

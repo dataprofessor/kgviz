@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate a t-SNE map demo from Snowflake Cortex conversation history."""
+"""Generate a t-SNE map demo from AI coding session transcripts."""
 
 from __future__ import annotations
 
@@ -11,25 +11,102 @@ from kgviz import Graph3D
 from kgviz.cortex_conversations import (
     DEFAULT_CORTEX_CONVERSATIONS,
     discover_cortex_history_files,
-    load_cortex_from_dir,
     load_cortex_sessions,
     load_cortex_turns,
 )
-from kgviz.jsonl_sessions import text_feature_matrix
+from kgviz.jsonl_sessions import (
+    DEFAULT_CLAUDE_PROJECTS,
+    discover_all_claude_transcripts,
+    discover_all_cursor_transcripts,
+    load_conversation_turns,
+    load_jsonl_sessions,
+    text_feature_matrix,
+)
 
 EXAMPLE_DIR = Path(__file__).resolve().parent
 OUTPUT_HTML = EXAMPLE_DIR / "demo_map_sessions_tsne.html"
 OUTPUT_HTML_LEGACY = EXAMPLE_DIR / "demo_map_cortex_tsne.html"
 
 
+def load_nodes(
+    source: str,
+    *,
+    per_session: bool,
+    min_chars: int,
+    cortex_dir: Path,
+    cursor_dir: Path,
+    claude_dir: Path,
+) -> tuple[list[dict], dict]:
+    nodes: list[dict] = []
+    meta: dict = {"sources": {}}
+
+    if source in ("cortex", "all"):
+        paths = discover_cortex_history_files(cortex_dir)
+        if not paths and source == "cortex":
+            raise SystemExit(f"No *.history.jsonl under {cortex_dir}")
+        if paths:
+            if per_session:
+                chunk = load_cortex_sessions(paths, conversations_root=cortex_dir, min_chars=min_chars)
+            else:
+                chunk = load_cortex_turns(paths, conversations_root=cortex_dir, min_chars=min_chars)
+            for n in chunk:
+                n.setdefault("source", "cortex")
+            nodes.extend(chunk)
+            meta["sources"]["cortex"] = {"files": len(paths), "points": len(chunk)}
+
+    if source in ("cursor", "all"):
+        paths = discover_all_cursor_transcripts(cursor_dir)
+        if not paths and source == "cursor":
+            raise SystemExit(f"No Cursor transcripts under {cursor_dir}")
+        if paths:
+            if per_session:
+                chunk = load_jsonl_sessions(paths, min_chars=min_chars)
+            else:
+                chunk = load_conversation_turns(paths, min_chars=min_chars)
+            nodes.extend(chunk)
+            meta["sources"]["cursor"] = {"files": len(paths), "points": len(chunk)}
+
+    if source in ("claude", "all"):
+        paths = discover_all_claude_transcripts(claude_dir)
+        if not paths and source == "claude":
+            raise SystemExit(f"No Claude Code transcripts under {claude_dir}")
+        if paths:
+            if per_session:
+                chunk = load_jsonl_sessions(paths, min_chars=min_chars)
+            else:
+                chunk = load_conversation_turns(paths, min_chars=min_chars)
+            nodes.extend(chunk)
+            meta["sources"]["claude"] = {"files": len(paths), "points": len(chunk)}
+
+    return nodes, meta
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Build t-SNE map from ~/.snowflake/cortex/conversations",
+        description="Build embedding map from Cortex, Cursor, or Claude Code sessions",
+    )
+    parser.add_argument(
+        "--source",
+        choices=("cortex", "cursor", "claude", "all"),
+        default="cortex",
+        help="Session store (default: cortex)",
     )
     parser.add_argument(
         "--conversations-dir",
+        "--cortex-dir",
+        dest="cortex_dir",
         default=str(DEFAULT_CORTEX_CONVERSATIONS),
-        help=f"Cortex conversations root (default: {DEFAULT_CORTEX_CONVERSATIONS})",
+        help=f"Snowflake Cortex Code (default: {DEFAULT_CORTEX_CONVERSATIONS})",
+    )
+    parser.add_argument(
+        "--cursor-dir",
+        default=str(Path.home() / ".cursor" / "projects"),
+        help="Cursor IDE projects root (agent-transcripts)",
+    )
+    parser.add_argument(
+        "--claude-dir",
+        default=str(DEFAULT_CLAUDE_PROJECTS),
+        help=f"Claude Code CLI projects (default: {DEFAULT_CLAUDE_PROJECTS})",
     )
     parser.add_argument(
         "--per-session",
@@ -40,7 +117,7 @@ def main() -> None:
     parser.add_argument("--min-chars", type=int, default=24)
     parser.add_argument(
         "--color-by",
-        choices=("topic", "role", "session", "workspace", "cluster"),
+        choices=("topic", "role", "session", "workspace", "source", "project", "cluster"),
         default="topic",
     )
     parser.add_argument("--method", choices=("tsne", "pca", "umap"), default="tsne")
@@ -52,20 +129,25 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    root = Path(args.conversations_dir).expanduser().resolve()
-    paths = discover_cortex_history_files(root)
-    if not paths:
-        raise SystemExit(f"No *.history.jsonl under {root}")
+    cortex_dir = Path(args.cortex_dir).expanduser().resolve()
+    cursor_dir = Path(args.cursor_dir).expanduser().resolve()
+    claude_dir = Path(args.claude_dir).expanduser().resolve()
 
-    print(f"Cortex conversations: {len(paths)} sessions under {root}")
-
-    if args.per_session:
-        nodes = load_cortex_sessions(paths, conversations_root=root, min_chars=args.min_chars)
-    else:
-        nodes = load_cortex_turns(paths, conversations_root=root, min_chars=args.min_chars)
+    nodes, src_meta = load_nodes(
+        args.source,
+        per_session=args.per_session,
+        min_chars=args.min_chars,
+        cortex_dir=cortex_dir,
+        cursor_dir=cursor_dir,
+        claude_dir=claude_dir,
+    )
 
     if not nodes:
-        raise SystemExit(f"No nodes with ≥{args.min_chars} chars")
+        raise SystemExit("No conversation text found. Check --source and directory paths.")
+
+    print(f"Source={args.source} → {len(nodes)} points")
+    for name, info in src_meta.get("sources", {}).items():
+        print(f"  {name}: {info['files']} files, {info['points']} points")
 
     if args.max_points and len(nodes) > args.max_points:
         step = max(1, len(nodes) // args.max_points)
@@ -97,23 +179,22 @@ def main() -> None:
     OUTPUT_HTML_LEGACY.write_text(html, encoding="utf-8")
 
     meta = {
-        "source": str(root),
-        "history_files": len(paths),
+        "source": args.source,
+        "cortex_dir": str(cortex_dir),
+        "cursor_dir": str(cursor_dir),
+        "claude_dir": str(claude_dir),
         "points": len(nodes),
         "per_session": args.per_session,
-        "sessions": len({n["session_id"] for n in nodes}),
-        "workspaces": len({n.get("workspace", "default") for n in nodes}),
+        "sessions": len({n.get("session_id", n["id"]) for n in nodes}),
         "method": method,
         "color_by": args.color_by,
+        **src_meta,
     }
     meta_path = EXAMPLE_DIR / "demo_map_sessions_tsne.meta.json"
     meta_path.write_text(json.dumps(meta, indent=2) + "\n", encoding="utf-8")
 
     print(f"Wrote {OUTPUT_HTML}")
-    print(
-        f"  {meta['points']} points · {meta['history_files']} sessions · "
-        f"{meta['workspaces']} workspaces · {method}"
-    )
+    print(f"  {meta['points']} points · {method} · color by {args.color_by}")
     print("Open: python3 serve_demo.py → http://127.0.0.1:8765/demo_map_sessions_tsne.html")
 
 

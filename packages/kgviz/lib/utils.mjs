@@ -9,6 +9,7 @@ export const PALETTE = [
 
 export const DEFAULT_CORTEX = join(homedir(), ".snowflake", "cortex", "conversations");
 export const DEFAULT_CURSOR = join(homedir(), ".cursor", "projects");
+export const DEFAULT_CLAUDE = join(homedir(), ".claude", "projects");
 
 export function truncate(s, max = 72) {
   const one = String(s).replace(/\s+/g, " ").trim();

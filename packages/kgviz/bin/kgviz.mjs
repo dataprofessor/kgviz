@@ -18,7 +18,7 @@ Usage:
 
 Commands:
   build <graph.json>     Standalone HTML from nodes/edges JSON
-  sessions               t-SNE / PCA map of Cortex + Cursor conversations
+  sessions               t-SNE / PCA map of AI coding session transcripts
   serve <file.html>      Local static server (default port 8765)
   help                   Show this help
 
@@ -27,10 +27,10 @@ Graph build:
   npx kgviz build graph.json --map --color-by topic
   npx kgviz build --nodes nodes.json --edges edges.json -o out.html
 
-Sessions map (Snowflake Cortex / Cursor):
+Sessions map (Cortex / Cursor / Claude Code):
   npx kgviz sessions --per-session -o sessions.html
   npx kgviz sessions --source all --color-by source
-  npx kgviz sessions --source cortex --method pca
+  npx kgviz sessions --source claude --method pca
 
 Serve:
   npx kgviz serve out.html --port 8765
@@ -86,6 +86,7 @@ function parse(argv) {
     else if (a === "--source") opts.source = next();
     else if (a === "--cortex-dir") opts.cortexDir = resolve(next());
     else if (a === "--cursor-dir") opts.cursorDir = resolve(next());
+    else if (a === "--claude-dir") opts.claudeDir = resolve(next());
     else if (a === "--method") opts.method = next();
     else if (a === "--min-chars") opts.minChars = Number(next());
     else if (a === "--max-points") opts.maxPoints = Number(next());
