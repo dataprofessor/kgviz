@@ -236,6 +236,71 @@ def load_conversation_turns(
     return turns
 
 
+def assign_lda_topics(
+    nodes: list[dict[str, Any]],
+    *,
+    n_topics: int | None = None,
+    text_field: str = "text",
+    topic_field: str = "topic",
+    max_features: int = 512,
+    random_state: int = 42,
+) -> dict[int, str]:
+    """
+    Topic-model session texts with LDA; write human-readable labels to ``topic_field``.
+
+    Returns a map of topic index → label (top TF–IDF terms per topic).
+    """
+    texts = [str(n.get(text_field) or "") for n in nodes]
+    n = len(texts)
+    if n == 0:
+        return {}
+    if n == 1:
+        nodes[0][topic_field] = "General"
+        return {0: "General"}
+
+    _require_sklearn()
+    from sklearn.decomposition import LatentDirichletAllocation
+    from sklearn.feature_extraction.text import TfidfVectorizer
+
+    k = n_topics if n_topics is not None else min(20, max(4, int(n**0.45)))
+    k = min(max(2, k), n)
+
+    min_df = 2 if n > 8 else 1
+    vectorizer = TfidfVectorizer(
+        max_features=max_features,
+        stop_words="english",
+        ngram_range=(1, 2),
+        min_df=min_df,
+    )
+    try:
+        X = vectorizer.fit_transform(texts)
+    except ValueError:
+        for node in nodes:
+            node[topic_field] = "General"
+        return {0: "General"}
+
+    lda = LatentDirichletAllocation(
+        n_components=k,
+        random_state=random_state,
+        learning_method="batch",
+        max_iter=25,
+    )
+    doc_topics = lda.fit_transform(X)
+    vocab = vectorizer.get_feature_names_out()
+    topic_names: dict[int, str] = {}
+    for ti in range(k):
+        weights = lda.components_[ti]
+        top_idx = weights.argsort()[:-5:-1]
+        terms = [str(vocab[i]) for i in top_idx if weights[i] > 0.01]
+        topic_names[ti] = (" · ".join(terms[:3]) if terms else f"Topic {ti + 1}")[:56]
+
+    for node, probs in zip(nodes, doc_topics):
+        ti = int(probs.argmax())
+        node[topic_field] = topic_names[ti]
+
+    return topic_names
+
+
 def text_feature_matrix(texts: list[str], *, max_features: int = 256) -> Any:
     """TF–IDF feature matrix for layout methods (n_samples × n_features)."""
     _require_sklearn()

@@ -29,8 +29,9 @@ Graph build:
 
 Sessions map (Cortex / Cursor / Claude Code):
   npx kgviz sessions --per-session -o sessions.html
-  npx kgviz sessions --source all --color-by source
-  npx kgviz sessions --source claude --method pca
+  npx kgviz sessions --source all --color-by topic --topic-model lda
+  npx kgviz sessions --source all --color-by source --topic-model rules
+  npx kgviz sessions --source claude --method pca --n-topics 12
 
 Serve:
   npx kgviz serve out.html --port 8765
@@ -91,6 +92,8 @@ function parse(argv) {
     else if (a === "--min-chars") opts.minChars = Number(next());
     else if (a === "--max-points") opts.maxPoints = Number(next());
     else if (a === "--per-session") opts.perSession = true;
+    else if (a === "--topic-model") opts.topicModel = next();
+    else if (a === "--n-topics") opts.nTopics = Number(next());
   }
   return opts;
 }

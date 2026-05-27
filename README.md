@@ -111,35 +111,20 @@ python3 example/generate_map_demo_large.py   # demo_map_10k.html, demo_map_50k.h
 
 ### AI coding session maps (example use case)
 
-Explore **where your agent conversations cluster** — by topic, project, or tool — as an interactive 2D/3D embedding map. Each point is a message turn or whole session (with `--per-session`).
+Explore **where your agent conversations cluster** — by topic, project, or tool — as an interactive 2D/3D embedding map.
 
-| Tool | Default data path | What gets read |
-|------|-------------------|----------------|
-| **Snowflake Cortex Code** | `~/.snowflake/cortex/conversations/**/*.history.jsonl` | Cortex agent chats |
-| **Cursor IDE** | `~/.cursor/projects/*/agent-transcripts/**/*.jsonl` | Cursor agent transcripts |
-| **Claude Code (CLI)** | `~/.claude/projects/<project>/*.jsonl` | Claude Code session logs ([local storage](https://kentgigger.com/posts/claude-code-conversation-history)) |
+**Full walkthrough (Cortex + Cursor + Claude):** [docs/SESSION_MAP.md](docs/SESSION_MAP.md)
 
-**Python** (full t-SNE / UMAP on large histories):
+Quick start after `pip install "kgviz[maps]"` and cloning [github.com/dataprofessor/kgviz](https://github.com/dataprofessor/kgviz):
 
 ```bash
-pip install "kgviz[maps]"
-
-# Cortex Code (default)
-python3 example/generate_map_demo_sessions.py --per-session
-
-# Cursor IDE transcripts
-python3 example/generate_map_demo_sessions.py --source cursor --per-session --color-by project
-
-# Claude Code CLI
-python3 example/generate_map_demo_sessions.py --source claude --per-session
-
-# All sources on one map
-python3 example/generate_map_demo_sessions.py --source all --color-by source
-
-python3 example/serve_demo.py   # → http://127.0.0.1:8765/demo_map_sessions_tsne.html
+python3 example/generate_map_demo_sessions.py \
+  --source all --per-session --method tsne --color-by source --max-points 1500
+python3 example/serve_demo.py
+# → http://127.0.0.1:8765/demo_map_sessions_tsne.html
 ```
 
-Options: `--per-session`, `--color-by topic|source|workspace|project`, `--method pca` for faster layout. Session HTML files are **gitignored** (private chat text) — generate locally only.
+Session HTML is **gitignored** (private chat text) — generate locally only.
 
 ### Node CLI (npm / npx)
 
@@ -151,8 +136,8 @@ npx kgviz build graph.json -o graph.html
 kgviz build graph.json -o graph.html          # after: npm install -g kgviz
 
 npx kgviz sessions --per-session -o sessions.html
-npx kgviz sessions --source claude --color-by project
-npx kgviz sessions --source all --color-by source
+npx kgviz sessions --source all --color-by topic --topic-model lda
+npx kgviz sessions --source claude --color-by project --topic-model rules
 npx kgviz serve sessions.html
 ```
 

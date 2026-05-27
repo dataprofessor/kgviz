@@ -4,6 +4,7 @@ import { loadCortexTurns, loadCortexSessions, discoverCortex } from "../lib/cort
 import { loadCursorTurns, loadCursorSessions, discoverCursor } from "../lib/cursor.mjs";
 import { loadClaudeTurns, loadClaudeSessions, discoverClaude } from "../lib/claude.mjs";
 import { buildTfidfMatrix } from "../lib/tfidf.mjs";
+import { assignLdaTopics } from "../lib/lda.mjs";
 import { computeLayout } from "../lib/layout.mjs";
 import { applyColors, attachCoords, DEFAULT_CORTEX, DEFAULT_CURSOR, DEFAULT_CLAUDE } from "../lib/utils.mjs";
 import { mapHtml } from "../lib/html.mjs";
@@ -41,6 +42,19 @@ export async function buildSessions(opts) {
     console.log(`Subsampled to ${nodes.length} points`);
   }
 
+  const topicModel = opts.topicModel ?? "lda";
+  if (topicModel === "lda") {
+    const nTopics = opts.nTopics > 0 ? opts.nTopics : null;
+    const ldaTopics = assignLdaTopics(nodes, { nTopics });
+    console.log(`LDA topics (${Object.keys(ldaTopics).length}):`);
+    for (const [idx, label] of Object.entries(ldaTopics).sort((a, b) => Number(a[0]) - Number(b[0]))) {
+      const count = nodes.filter(n => n.topic === label).length;
+      console.log(`  [${idx}] ${label} (${count} sessions)`);
+    }
+  } else if (topicModel === "none" && opts.colorBy === "topic") {
+    for (const n of nodes) n.topic = n.source ?? "unknown";
+  }
+
   console.log(`Embedding ${nodes.length} points…`);
   const matrix = buildTfidfMatrix(nodes.map(n => n.text));
   console.log(`Layout (${opts.method})…`);
@@ -63,6 +77,8 @@ export const SESSION_DEFAULTS = {
   out: "kgviz-map.html",
   method: "tsne",
   colorBy: "topic",
+  topicModel: "lda",
+  nTopics: 0,
   minChars: 24,
   maxPoints: 0,
   perSession: false,

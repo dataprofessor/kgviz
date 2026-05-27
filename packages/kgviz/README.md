@@ -43,15 +43,17 @@ Cluster **Cortex Code**, **Cursor IDE**, or **Claude Code** transcripts into one
 
 ```bash
 npx kgviz sessions --per-session -o sessions.html
-npx kgviz sessions --source claude --color-by project
-npx kgviz sessions --source all --color-by source
-npx kgviz sessions --source cortex --method pca
+npx kgviz sessions --source all --color-by topic --topic-model lda
+npx kgviz sessions --source claude --color-by project --topic-model rules
+npx kgviz sessions --source cortex --method pca --n-topics 12
 ```
 
 | Flag | Description |
 |------|-------------|
 | `--source` | `cortex` \| `cursor` \| `claude` \| `all` |
 | `--per-session` | One node per chat (not per message) |
+| `--topic-model` | `lda` (default) \| `rules` \| `none` — how to label topics when `--color-by topic` |
+| `--n-topics` | LDA topic count (`0` = auto, typically 4–20) |
 | `--cortex-dir` | Default `~/.snowflake/cortex/conversations` |
 | `--cursor-dir` | Default `~/.cursor/projects` (agent-transcripts) |
 | `--claude-dir` | Default `~/.claude/projects` (Claude Code CLI) |

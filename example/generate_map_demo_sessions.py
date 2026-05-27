@@ -16,6 +16,7 @@ from kgviz.cortex_conversations import (
 )
 from kgviz.jsonl_sessions import (
     DEFAULT_CLAUDE_PROJECTS,
+    assign_lda_topics,
     discover_all_claude_transcripts,
     discover_all_cursor_transcripts,
     load_conversation_turns,
@@ -127,7 +128,26 @@ def main() -> None:
         default=0,
         help="Cap nodes for layout (0 = no cap). t-SNE slows above ~8k turns.",
     )
+    parser.add_argument(
+        "-o",
+        "--output",
+        default=str(OUTPUT_HTML),
+        help=f"Output HTML path (default: {OUTPUT_HTML.name} in example/)",
+    )
+    parser.add_argument(
+        "--topic-model",
+        choices=("lda", "rules", "none"),
+        default="lda",
+        help="How to assign topic labels for --color-by topic (default: lda)",
+    )
+    parser.add_argument(
+        "--n-topics",
+        type=int,
+        default=0,
+        help="LDA topic count (0 = auto, typically 4–20)",
+    )
     args = parser.parse_args()
+    output_html = Path(args.output).expanduser().resolve()
 
     cortex_dir = Path(args.cortex_dir).expanduser().resolve()
     cursor_dir = Path(args.cursor_dir).expanduser().resolve()
@@ -154,6 +174,18 @@ def main() -> None:
         nodes = nodes[::step][: args.max_points]
         print(f"Subsampled to {len(nodes)} points (--max-points)")
 
+    topic_labels: dict[int, str] = {}
+    if args.topic_model == "lda":
+        n_topics = args.n_topics if args.n_topics > 0 else None
+        topic_labels = assign_lda_topics(nodes, n_topics=n_topics)
+        print(f"LDA topics ({len(topic_labels)}):")
+        for idx, label in sorted(topic_labels.items()):
+            count = sum(1 for n in nodes if n.get("topic") == label)
+            print(f"  [{idx}] {label} ({count} sessions)")
+    elif args.topic_model == "none" and args.color_by == "topic":
+        for n in nodes:
+            n["topic"] = n.get("source", "unknown")
+
     method = args.method
     if method == "tsne" and len(nodes) > 8000:
         print(f"Note: {len(nodes)} points — t-SNE may take several minutes")
@@ -171,12 +203,16 @@ def main() -> None:
         knn_k=0,
         node_color_by=args.color_by,
         legend_node_by=args.color_by,
+        cluster_field="cluster" if args.color_by == "cluster" else None,
         height=720,
         show_nav_info=False,
     )
     html = fig.to_html()
-    OUTPUT_HTML.write_text(html, encoding="utf-8")
-    OUTPUT_HTML_LEGACY.write_text(html, encoding="utf-8")
+    output_html.parent.mkdir(parents=True, exist_ok=True)
+    output_html.write_text(html, encoding="utf-8")
+    if output_html.resolve() != OUTPUT_HTML.resolve():
+        OUTPUT_HTML.write_text(html, encoding="utf-8")
+        OUTPUT_HTML_LEGACY.write_text(html, encoding="utf-8")
 
     meta = {
         "source": args.source,
@@ -188,12 +224,14 @@ def main() -> None:
         "sessions": len({n.get("session_id", n["id"]) for n in nodes}),
         "method": method,
         "color_by": args.color_by,
+        "topic_model": args.topic_model,
+        "lda_topics": topic_labels,
         **src_meta,
     }
-    meta_path = EXAMPLE_DIR / "demo_map_sessions_tsne.meta.json"
+    meta_path = output_html.with_suffix(".meta.json")
     meta_path.write_text(json.dumps(meta, indent=2) + "\n", encoding="utf-8")
 
-    print(f"Wrote {OUTPUT_HTML}")
+    print(f"Wrote {output_html}")
     print(f"  {meta['points']} points · {method} · color by {args.color_by}")
     print("Open: python3 example/serve_demo.py → http://127.0.0.1:8765/demo_map_sessions_tsne.html")
 

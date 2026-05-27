@@ -2,7 +2,7 @@ const STOP = new Set(
   "a an the and or but in on at to for of is are was were be been being have has had do does did will would could should may might must can this that these those it its i you he she they we my your our their".split(" "),
 );
 
-function tokenize(text) {
+export function tokenize(text) {
   return String(text)
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, " ")
