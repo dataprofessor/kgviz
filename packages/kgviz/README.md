@@ -57,7 +57,7 @@ npx kgviz sessions --source cortex --method pca --n-topics 12
 | `--cortex-dir` | Default `~/.snowflake/cortex/conversations` |
 | `--cursor-dir` | Default `~/.cursor/projects` (agent-transcripts) |
 | `--claude-dir` | Default `~/.claude/projects` (Claude Code CLI) |
-| `--method` | `tsne` \| `pca` (t-SNE capped at 4k points in Node) |
+| `--method` | `tsne` \| `pca` (Node t-SNE auto-scales `nIter`: 500/&lt;300 pts → 175/1500+; &gt;2500 falls back to PCA) |
 
 ### `kgviz serve` — local preview
 
