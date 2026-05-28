@@ -45,14 +45,10 @@ def scale_coords(coords: Any, target_span: float = 200.0) -> Any:
     if c.ndim != 2 or c.shape[1] < 2:
         raise ValueError("coords must be (n_samples, 2+) ")
     out = c[:, :3].copy() if c.shape[1] >= 3 else np.column_stack([c[:, 0], c[:, 1], np.zeros(len(c))])
-    xy = out[:, :2]
-    center = xy.mean(axis=0)
-    xy = xy - center
-    extent = float(np.max(np.abs(xy))) or 1.0
-    xy = xy * (target_span / extent)
-    out[:, 0] = xy[:, 0]
-    out[:, 1] = xy[:, 1]
-    return out
+    center = out.mean(axis=0)
+    out = out - center
+    extent = float(np.max(np.abs(out))) or 1.0
+    return out * (target_span / extent)
 
 
 def compute_layout(

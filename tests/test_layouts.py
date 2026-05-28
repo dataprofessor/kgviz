@@ -11,6 +11,12 @@ def test_scale_coords():
     assert float(np.max(np.abs(c[:, :2]))) == pytest.approx(100, rel=0.01)
 
 
+def test_scale_coords_3d():
+    c = scale_coords([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]], target_span=100)
+    assert c.shape == (4, 3)
+    assert float(np.max(np.abs(c))) == pytest.approx(100, rel=0.01)
+
+
 def test_compute_pca_2d():
     rng = np.random.default_rng(0)
     X = rng.normal(size=(40, 8))

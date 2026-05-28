@@ -23,24 +23,36 @@ export function applyColors(nodes, field) {
   return nodes;
 }
 
+/** Center and uniformly scale layout coords to ~[-span, span] per axis (2D or 3D). */
 export function scaleCoords(coords, targetSpan = 200) {
   const n = coords.length;
   if (!n) return [];
-  let cx = 0;
-  let cy = 0;
-  for (const [x, y] of coords) {
-    cx += x;
-    cy += y;
+  const dim = Math.min(
+    3,
+    Math.max(2, ...coords.map(c => (Array.isArray(c) ? c.length : 0))),
+  );
+  const pts = coords.map(c => {
+    const row = Array.isArray(c) ? c : [c];
+    return [row[0] ?? 0, row[1] ?? 0, dim >= 3 ? row[2] ?? 0 : 0];
+  });
+  const center = [0, 0, 0];
+  for (const p of pts) {
+    for (let i = 0; i < dim; i++) center[i] += p[i];
   }
-  cx /= n;
-  cy /= n;
+  for (let i = 0; i < dim; i++) center[i] /= n;
   let extent = 0;
-  for (const [x, y] of coords) {
-    extent = Math.max(extent, Math.abs(x - cx), Math.abs(y - cy));
+  for (const p of pts) {
+    for (let i = 0; i < dim; i++) {
+      extent = Math.max(extent, Math.abs(p[i] - center[i]));
+    }
   }
   extent = extent || 1;
   const s = targetSpan / extent;
-  return coords.map(([x, y]) => [((x - cx) * s), ((y - cy) * s), 0]);
+  return pts.map(p => [
+    (p[0] - center[0]) * s,
+    (p[1] - center[1]) * s,
+    (p[2] - center[2]) * s,
+  ]);
 }
 
 export function attachCoords(nodes, coords) {

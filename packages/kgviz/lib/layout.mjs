@@ -2,6 +2,9 @@ import { PCA } from "ml-pca";
 import TSNE from "tsne-js";
 import { scaleCoords } from "./utils.mjs";
 
+/** Embedding dimension for session maps (2D view uses x/y; 3D view uses x/y/z). */
+export const MAP_EMBED_DIM = 3;
+
 /** Final-phase iteration count for tsne-js (see layout tiers in packages/kgviz/README.md). */
 export function tsneIterCount(n) {
   if (n < 300) return 500;
@@ -22,7 +25,7 @@ function tsneTimeEstimate(n) {
 
 export async function computeLayout(matrix, method = "tsne", { randomState = 42 } = {}) {
   const n = matrix.length;
-  if (n < 2) return scaleCoords([[0, 0]]);
+  if (n < 2) return scaleCoords([[0, 0, 0]]);
 
   if (method === "pca" || (method === "tsne" && n > 2500)) {
     if (method === "tsne" && n > 2500) {
@@ -31,23 +34,23 @@ export async function computeLayout(matrix, method = "tsne", { randomState = 42 
       );
     }
     const pca = new PCA(matrix, { center: true, scale: false });
-    const out = pca.predict(matrix, { nComponents: 2 });
+    const out = pca.predict(matrix, { nComponents: MAP_EMBED_DIM });
     const rows = out.to2DArray ? out.to2DArray() : out;
     return scaleCoords(rows);
   }
 
   const pca = new PCA(matrix, { center: true, scale: false });
-  const initRaw = pca.predict(matrix, { nComponents: 2 });
+  const initRaw = pca.predict(matrix, { nComponents: MAP_EMBED_DIM });
   const init = initRaw.to2DArray ? initRaw.to2DArray() : initRaw;
   const perp = Math.min(30, Math.max(5, Math.floor((n - 1) / 3)));
 
   const nIter = tsneIterCount(n);
   console.error(
-    `  t-SNE on ${n} points, nIter=${nIter} (~${tsneTimeEstimate(n)} min in Node; use --method pca for instant layout)…`,
+    `  t-SNE (${MAP_EMBED_DIM}D) on ${n} points, nIter=${nIter} (~${tsneTimeEstimate(n)} min in Node; use --method pca for instant layout)…`,
   );
 
   const tsne = new TSNE({
-    dim: 2,
+    dim: MAP_EMBED_DIM,
     perplexity: perp,
     earlyExaggeration: 4,
     learningRate: 100,
@@ -70,5 +73,5 @@ export async function computeLayout(matrix, method = "tsne", { randomState = 42 
   const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
   console.error(`  t-SNE finished in ${elapsed}s`);
   const out = tsne.getOutput();
-  return scaleCoords(out.map(row => [row[0], row[1]]));
+  return scaleCoords(out);
 }
