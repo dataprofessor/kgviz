@@ -22,7 +22,8 @@ tests/       pytest suite
 
 ```bash
 pip install kgviz
-pip install "kgviz[all]"    # Streamlit, Jupyter, maps, etc.
+pip install "kgviz[maps]"   # session maps (LDA, t-SNE, PCA)
+pip install "kgviz[all]"      # Streamlit, Jupyter, maps, etc.
 ```
 
 **Node CLI** ([npm](https://www.npmjs.com/package/kgviz)) — no Python required for HTML export and session maps:

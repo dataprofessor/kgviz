@@ -33,3 +33,5 @@ example/data/sessions/*.jsonl
 example/demo_map_sessions*
 example/demo_map_cortex*
 example/notebook_export.html
+packages/kgviz/*.html
+packages/kgviz/kgviz-map.html
