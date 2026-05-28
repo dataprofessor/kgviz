@@ -3,33 +3,10 @@
 
 from __future__ import annotations
 
-import random
 from pathlib import Path
 
-import numpy as np
-
+from demo_graph import synthetic_corpus
 from kgviz import Graph3D
-
-
-def synthetic_corpus(n: int = 400, seed: int = 42) -> tuple[list[dict], np.ndarray]:
-    rng = random.Random(seed)
-    np_rng = np.random.default_rng(seed)
-    topics = ["Physics", "Biology", "ML", "Math", "Chemistry"]
-    nodes = []
-    rows = []
-    per = n // len(topics)
-    for t_idx, topic in enumerate(topics):
-        center = np_rng.normal(0, 1, 32) + t_idx * 2.5
-        for i in range(per):
-            title = f"{topic} paper {i}: {rng.randint(1000, 9999)}"
-            nodes.append({
-                "id": title,
-                "label": title[:48] + ("…" if len(title) > 48 else ""),
-                "topic": topic,
-            })
-            rows.append(center + np_rng.normal(0, 0.35, 32))
-    features = np.vstack(rows)
-    return nodes, features
 
 
 def main() -> None:
