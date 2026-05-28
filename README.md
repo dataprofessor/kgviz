@@ -29,10 +29,12 @@ pip install "kgviz[all]"      # Streamlit, Jupyter, maps, etc.
 **Node CLI** ([npm](https://www.npmjs.com/package/kgviz)) — no Python required for HTML export and session maps:
 
 ```bash
-# One-off (no install) — good for trying it
-npx kgviz help
+# Quick try (pinned release, no install)
+npx kgviz@0.2.2 sessions --per-session --method tsne -o sessions.html
+npx kgviz@0.2.2 serve sessions.html
 
-# Or install globally and run `kgviz` directly
+# Latest on npm
+npx kgviz help
 npm install -g kgviz
 kgviz help
 ```
@@ -116,11 +118,19 @@ Explore **where your agent conversations cluster** — by topic, project, or too
 
 **Full walkthrough (Cortex + Cursor + Claude):** [docs/SESSION_MAP.md](docs/SESSION_MAP.md)
 
-Quick start after `pip install "kgviz[maps]"` and cloning [github.com/dataprofessor/kgviz](https://github.com/dataprofessor/kgviz):
+Quick start:
 
 ```bash
+pip install "kgviz[maps]==0.2.2"
+python3 -c "from kgviz.jsonl_sessions import assign_lda_topics; print('ok')"
+```
+
+From a clone ([github.com/dataprofessor/kgviz](https://github.com/dataprofessor/kgviz)):
+
+```bash
+pip install -e ".[maps]"
 python3 example/generate_map_demo_sessions.py \
-  --source all --per-session --method tsne --color-by source --max-points 1500
+  --source all --per-session --method tsne --color-by topic --topic-model lda --max-points 1500
 python3 example/serve_demo.py
 # → http://127.0.0.1:8765/demo_map_sessions_tsne.html
 ```
@@ -132,15 +142,20 @@ Session HTML is **gitignored** (private chat text) — generate locally only.
 Package: **[kgviz on npm](https://www.npmjs.com/package/kgviz)** (`npx` = run without installing; `npm install -g` = install the `kgviz` command).
 
 ```bash
-# Either form works:
-npx kgviz build graph.json -o graph.html
-kgviz build graph.json -o graph.html          # after: npm install -g kgviz
+# Quick try (0.2.2 — session map from local Cortex/Cursor/Claude history)
+npx kgviz@0.2.2 sessions --per-session --method tsne --color-by topic -o sessions.html
+npx kgviz@0.2.2 serve sessions.html
 
-npx kgviz sessions --per-session -o sessions.html
-npx kgviz sessions --source all --color-by topic --topic-model lda
+# Graph JSON → HTML
+npx kgviz build graph.json -o graph.html
+
+# More session options
+npx kgviz sessions --source all --per-session --method tsne --topic-model lda
 npx kgviz sessions --source claude --color-by project --topic-model rules
-npx kgviz serve sessions.html
+npx kgviz sessions --max-points 800 --method pca   # faster preview
 ```
+
+After `npm install -g kgviz`, drop the `@0.2.2` prefix and use `kgviz` directly.
 
 See [packages/kgviz/README.md](packages/kgviz/README.md) for all flags.
 
