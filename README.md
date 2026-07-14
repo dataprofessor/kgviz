@@ -2,7 +2,9 @@
 
 kgviz is a 3D knowledge graph visualization for Python. It works like Plotly/Altair across Jupyter notebooks, Streamlit, Gradio, Dash, marimo, and plain HTML export.
 
-![kgviz web demo — t-SNE embedding map](docs/kgviz-web.png)
+Try the [**live interactive demo**](https://dataprofessor.github.io/kgviz/) — pan, zoom, and filter a t-SNE embedding map right in your browser (click the screenshot below).
+
+[![kgviz web demo — t-SNE embedding map](docs/kgviz-web.png)](https://dataprofessor.github.io/kgviz/)
 
 ## Project layout
 
